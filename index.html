@@ -1,0 +1,1458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SKILL.md Generator — Watanabe Tools</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0b0f;
+    --surface: #111318;
+    --surface2: #171b24;
+    --border: #1f2535;
+    --accent: #5b8def;
+    --accent2: #a78bfa;
+    --accent3: #34d399;
+    --warn: #f59e0b;
+    --danger: #ef4444;
+    --text: #e8ecf5;
+    --muted: #6b7594;
+    --dim: #3d4561;
+    --mono: 'JetBrains Mono', monospace;
+    --sans: 'Outfit', sans-serif;
+    --display: 'Syne', sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* === NOISE TEXTURE === */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none; z-index: 0;
+  }
+
+  /* === HEADER === */
+  header {
+    position: relative; z-index: 10;
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 1rem;
+    background: linear-gradient(180deg, rgba(91,141,239,0.05) 0%, transparent 100%);
+  }
+
+  .logo-mark {
+    width: 40px; height: 40px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--display);
+    font-weight: 800; font-size: 1rem;
+    color: #fff;
+    box-shadow: 0 0 20px rgba(91,141,239,0.4);
+    flex-shrink: 0;
+  }
+
+  .header-text h1 {
+    font-family: var(--display);
+    font-size: 1.1rem; font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.02em;
+  }
+
+  .header-text p {
+    font-size: 0.72rem; color: var(--muted);
+    font-family: var(--mono);
+    letter-spacing: 0.05em;
+  }
+
+  .header-badge {
+    margin-left: auto;
+    background: rgba(91,141,239,0.12);
+    border: 1px solid rgba(91,141,239,0.25);
+    color: var(--accent);
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    padding: 0.25rem 0.6rem;
+    border-radius: 20px;
+    letter-spacing: 0.08em;
+  }
+
+  /* === LAYOUT === */
+  .workspace {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    height: calc(100vh - 70px);
+    position: relative; z-index: 1;
+  }
+
+  @media (max-width: 768px) {
+    .workspace { grid-template-columns: 1fr; height: auto; }
+  }
+
+  /* === FORM PANEL === */
+  .form-panel {
+    border-right: 1px solid var(--border);
+    overflow-y: auto;
+    padding: 1.5rem;
+  }
+
+  .panel-header {
+    display: flex; align-items: center; gap: 0.6rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .panel-icon {
+    width: 28px; height: 28px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.85rem;
+  }
+
+  .panel-title {
+    font-family: var(--display);
+    font-size: 0.95rem; font-weight: 700;
+    color: var(--text);
+  }
+
+  .panel-subtitle {
+    font-size: 0.7rem; color: var(--muted);
+    font-family: var(--mono);
+  }
+
+  /* === FORM FIELDS === */
+  .field-group {
+    margin-bottom: 1.2rem;
+  }
+
+  .field-label {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 0.45rem;
+  }
+
+  .field-label span {
+    font-size: 0.72rem; font-weight: 600;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-family: var(--mono);
+  }
+
+  .field-label .required {
+    color: var(--danger);
+    font-size: 0.65rem;
+  }
+
+  .char-count {
+    font-family: var(--mono);
+    font-size: 0.62rem;
+    color: var(--dim);
+    transition: color 0.2s;
+  }
+
+  .char-count.warn { color: var(--warn); }
+  .char-count.danger { color: var(--danger); }
+
+  input[type="text"], textarea, select {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 0.85rem;
+    padding: 0.6rem 0.8rem;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    resize: vertical;
+  }
+
+  input[type="text"]:focus, textarea:focus, select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(91,141,239,0.12);
+  }
+
+  input[type="text"]::placeholder, textarea::placeholder {
+    color: var(--dim);
+  }
+
+  textarea { min-height: 90px; font-size: 0.82rem; line-height: 1.5; }
+
+  /* Tools multi-select */
+  .tools-grid {
+    display: flex; flex-wrap: wrap; gap: 0.4rem;
+  }
+
+  .tool-chip {
+    display: flex; align-items: center; gap: 0.35rem;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.3rem 0.6rem;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-size: 0.72rem;
+    font-family: var(--mono);
+    color: var(--muted);
+    user-select: none;
+  }
+
+  .tool-chip:hover { border-color: var(--accent); color: var(--accent); }
+
+  .tool-chip.selected {
+    background: rgba(91,141,239,0.12);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .tool-chip .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--dim);
+    transition: background 0.15s;
+  }
+
+  .tool-chip.selected .dot { background: var(--accent); }
+
+  /* Instruction builder */
+  .instruction-builder {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .ib-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .ib-tab {
+    flex: 1;
+    padding: 0.5rem;
+    background: none; border: none;
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    transition: all 0.15s;
+    border-bottom: 2px solid transparent;
+  }
+
+  .ib-tab:hover { color: var(--text); }
+  .ib-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  .ib-pane { display: none; padding: 0.8rem; }
+  .ib-pane.active { display: block; }
+
+  .ib-pane textarea {
+    min-height: 110px;
+    background: transparent;
+    border: none;
+    padding: 0;
+    font-family: var(--mono);
+    font-size: 0.78rem;
+  }
+
+  .ib-pane textarea:focus { box-shadow: none; }
+
+  /* Steps builder */
+  .steps-list { list-style: none; }
+
+  .step-item {
+    display: flex; align-items: flex-start; gap: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .step-num {
+    flex-shrink: 0;
+    width: 22px; height: 22px;
+    background: var(--border);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    color: var(--muted);
+    margin-top: 5px;
+  }
+
+  .step-item input {
+    flex: 1;
+    min-height: unset;
+    padding: 0.4rem 0.6rem;
+    font-size: 0.8rem;
+  }
+
+  .step-del {
+    background: none; border: none;
+    color: var(--dim); cursor: pointer;
+    font-size: 0.9rem; padding: 4px;
+    transition: color 0.15s;
+    margin-top: 2px;
+  }
+  .step-del:hover { color: var(--danger); }
+
+  .add-step-btn {
+    width: 100%;
+    background: none;
+    border: 1px dashed var(--border);
+    border-radius: 7px;
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    padding: 0.5rem;
+    cursor: pointer;
+    transition: all 0.15s;
+    margin-top: 0.3rem;
+  }
+
+  .add-step-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* Example section */
+  .example-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+
+  .example-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 0.5rem 0.7rem;
+    display: flex; gap: 0.5rem;
+  }
+
+  .example-label {
+    font-family: var(--mono);
+    font-size: 0.6rem;
+    color: var(--muted);
+    width: 38px; flex-shrink: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding-top: 2px;
+  }
+
+  .example-block textarea {
+    min-height: 48px;
+    background: transparent;
+    border: none;
+    padding: 0;
+    font-size: 0.78rem;
+    font-family: var(--mono);
+  }
+
+  .example-block textarea:focus { box-shadow: none; }
+
+  /* CTA Buttons */
+  .action-bar {
+    display: flex; gap: 0.6rem;
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+
+  .btn {
+    display: flex; align-items: center; gap: 0.4rem;
+    padding: 0.55rem 1rem;
+    border-radius: 8px;
+    font-family: var(--sans);
+    font-size: 0.82rem;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    transition: all 0.15s;
+    letter-spacing: 0.01em;
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: #fff;
+    box-shadow: 0 4px 15px rgba(91,141,239,0.3);
+  }
+
+  .btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(91,141,239,0.45);
+  }
+
+  .btn-ghost {
+    background: var(--surface2);
+    color: var(--muted);
+    border: 1px solid var(--border);
+  }
+
+  .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+
+  .btn-success {
+    background: rgba(52,211,153,0.12);
+    color: var(--accent3);
+    border: 1px solid rgba(52,211,153,0.25);
+  }
+
+  .btn-success:hover { background: rgba(52,211,153,0.2); }
+
+  /* Template picker */
+  .template-row {
+    display: flex; gap: 0.4rem;
+    margin-bottom: 1.2rem;
+    flex-wrap: wrap;
+  }
+
+  .tmpl-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    padding: 0.3rem 0.7rem;
+    cursor: pointer;
+    transition: all 0.15s;
+    letter-spacing: 0.04em;
+  }
+
+  .tmpl-btn:hover { border-color: var(--accent2); color: var(--accent2); }
+
+  /* === OUTPUT PANEL === */
+  .output-panel {
+    background: var(--surface);
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .output-header {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 0.8rem;
+    position: sticky; top: 0;
+    background: var(--surface);
+    z-index: 5;
+  }
+
+  .output-title {
+    font-family: var(--display);
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--text);
+    flex: 1;
+  }
+
+  .output-tabs {
+    display: flex; gap: 2px;
+    background: var(--surface2);
+    border-radius: 7px;
+    padding: 2px;
+    border: 1px solid var(--border);
+  }
+
+  .out-tab {
+    background: none; border: none;
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    padding: 0.3rem 0.7rem;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.15s;
+    letter-spacing: 0.04em;
+  }
+
+  .out-tab.active {
+    background: var(--accent);
+    color: #fff;
+  }
+
+  .copy-btn {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    padding: 0.3rem 0.7rem;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+
+  .copy-btn:hover { border-color: var(--accent3); color: var(--accent3); }
+  .copy-btn.copied { border-color: var(--accent3); color: var(--accent3); }
+
+  /* Code output */
+  .code-output {
+    flex: 1;
+    padding: 1.5rem;
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    line-height: 1.7;
+    white-space: pre-wrap;
+    word-break: break-word;
+    color: #c9d1e0;
+    background: transparent;
+    border: none;
+    outline: none;
+    width: 100%;
+    resize: none;
+    overflow: hidden;
+  }
+
+  /* Syntax highlighting classes */
+  .preview-output {
+    flex: 1;
+    padding: 1.5rem;
+    overflow-y: auto;
+    display: none;
+  }
+
+  .preview-output.active { display: block; }
+  .code-wrapper { display: flex; flex-direction: column; flex: 1; }
+  .code-wrapper.hidden { display: none; }
+
+  /* Syntax highlight */
+  .sh-key { color: #a78bfa; }
+  .sh-val { color: #86efac; }
+  .sh-str { color: #fcd34d; }
+  .sh-comment { color: #4b5563; font-style: italic; }
+  .sh-h1 { color: var(--accent); font-weight: 600; }
+  .sh-h2 { color: var(--accent2); font-weight: 600; }
+  .sh-body { color: #c9d1e0; }
+  .sh-fence { color: #6b7280; }
+
+  /* Preview render */
+  .preview-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  .preview-fm {
+    background: rgba(91,141,239,0.06);
+    border-bottom: 1px solid var(--border);
+    padding: 1rem 1.2rem;
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    line-height: 1.8;
+  }
+
+  .fm-row { display: flex; gap: 0.8rem; }
+  .fm-k { color: var(--accent); min-width: 100px; }
+  .fm-v { color: #86efac; }
+  .fm-v-multi { color: #86efac; white-space: pre-wrap; }
+
+  .preview-body {
+    padding: 1.2rem;
+    font-size: 0.82rem;
+    line-height: 1.6;
+  }
+
+  .preview-h1 {
+    font-family: var(--display);
+    font-size: 1.1rem; font-weight: 700;
+    color: var(--text);
+    margin-bottom: 0.3rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 1rem;
+  }
+
+  .preview-h2 {
+    font-family: var(--display);
+    font-size: 0.85rem; font-weight: 700;
+    color: var(--accent2);
+    margin: 1rem 0 0.4rem;
+    display: flex; align-items: center; gap: 0.4rem;
+  }
+
+  .preview-h2::before {
+    content: '##';
+    color: var(--dim);
+    font-family: var(--mono);
+    font-size: 0.75rem;
+  }
+
+  .preview-p { color: var(--muted); margin-bottom: 0.6rem; font-size: 0.82rem; }
+
+  .preview-ol { padding-left: 1.2rem; color: var(--muted); font-size: 0.82rem; }
+  .preview-ol li { margin-bottom: 0.25rem; }
+
+  .preview-code {
+    background: var(--bg);
+    border-radius: 6px;
+    padding: 0.7rem 0.9rem;
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    color: #86efac;
+    margin: 0.5rem 0;
+    border: 1px solid var(--border);
+    overflow-x: auto;
+    white-space: pre;
+  }
+
+  .preview-tags {
+    display: flex; flex-wrap: wrap; gap: 0.3rem;
+    margin-top: 0.4rem;
+  }
+
+  .preview-tag {
+    background: rgba(167,139,250,0.12);
+    border: 1px solid rgba(167,139,250,0.25);
+    color: var(--accent2);
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+  }
+
+  /* Valid indicator */
+  .validity-bar {
+    padding: 0.5rem 1.5rem;
+    border-top: 1px solid var(--border);
+    display: flex; align-items: center; gap: 0.6rem;
+    background: var(--bg);
+    font-family: var(--mono);
+    font-size: 0.68rem;
+  }
+
+  .validity-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--dim);
+    box-shadow: 0 0 6px var(--dim);
+  }
+
+  .validity-dot.valid { background: var(--accent3); box-shadow: 0 0 8px var(--accent3); }
+  .validity-dot.warn { background: var(--warn); box-shadow: 0 0 8px var(--warn); }
+  .validity-dot.error { background: var(--danger); box-shadow: 0 0 8px var(--danger); }
+
+  .validity-text { color: var(--muted); }
+  .validity-text.valid { color: var(--accent3); }
+  .validity-text.warn { color: var(--warn); }
+  .validity-text.error { color: var(--danger); }
+
+  .validity-chars {
+    margin-left: auto;
+    color: var(--dim);
+  }
+
+  /* === SECTION DIVIDER === */
+  .section-divider {
+    display: flex; align-items: center; gap: 0.6rem;
+    margin: 1.2rem 0 0.8rem;
+  }
+
+  .section-divider-label {
+    font-family: var(--mono);
+    font-size: 0.62rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--dim);
+    white-space: nowrap;
+  }
+
+  .section-divider-line {
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--dim); }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 1.5rem; right: 1.5rem;
+    background: var(--surface2);
+    border: 1px solid var(--accent3);
+    color: var(--accent3);
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    padding: 0.6rem 1rem;
+    border-radius: 8px;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: all 0.3s;
+    z-index: 100;
+    pointer-events: none;
+  }
+
+  .toast.show { opacity: 1; transform: translateY(0); }
+
+  /* Download button flash */
+  @keyframes pulse-glow {
+    0%, 100% { box-shadow: 0 4px 15px rgba(52,211,153,0.3); }
+    50% { box-shadow: 0 4px 25px rgba(52,211,153,0.6); }
+  }
+
+  .btn-success.pulse { animation: pulse-glow 1.5s ease-in-out 2; }
+
+  /* Field hint */
+  .field-hint {
+    font-size: 0.65rem;
+    color: var(--dim);
+    margin-top: 0.3rem;
+    font-family: var(--mono);
+  }
+
+  /* Category badge */
+  .cat-badge {
+    display: inline-flex; align-items: center; gap: 0.3rem;
+    background: rgba(167,139,250,0.1);
+    border: 1px solid rgba(167,139,250,0.2);
+    border-radius: 4px;
+    padding: 0.15rem 0.5rem;
+    font-family: var(--mono);
+    font-size: 0.62rem;
+    color: var(--accent2);
+  }
+
+  /* Glow border on active section */
+  .active-section {
+    border-color: rgba(91,141,239,0.4) !important;
+    box-shadow: 0 0 12px rgba(91,141,239,0.1);
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-mark">SK</div>
+  <div class="header-text">
+    <h1>SKILL.md Generator</h1>
+    <p>Claude Skill Pattern Builder · Watanabe Tools</p>
+  </div>
+  <span class="header-badge">v2.0</span>
+</header>
+
+<div class="workspace">
+  <!-- LEFT: FORM PANEL -->
+  <div class="form-panel">
+    <div class="panel-header">
+      <div class="panel-icon">⚙️</div>
+      <div>
+        <div class="panel-title">Skill Builder</div>
+        <div class="panel-subtitle">Fill fields → Output auto-generates</div>
+      </div>
+    </div>
+
+    <!-- QUICK TEMPLATES -->
+    <div class="field-group">
+      <div class="field-label">
+        <span>Quick Templates</span>
+      </div>
+      <div class="template-row">
+        <button class="tmpl-btn" onclick="loadTemplate('email')">📧 Email Formatter</button>
+        <button class="tmpl-btn" onclick="loadTemplate('research')">🔬 Research Writer</button>
+        <button class="tmpl-btn" onclick="loadTemplate('sop')">📋 SOP Generator</button>
+        <button class="tmpl-btn" onclick="loadTemplate('dashboard')">📊 Dashboard</button>
+        <button class="tmpl-btn" onclick="loadTemplate('blank')">✨ Blank</button>
+      </div>
+    </div>
+
+    <!-- FRONTMATTER SECTION -->
+    <div class="section-divider">
+      <span class="section-divider-label">── Frontmatter</span>
+      <div class="section-divider-line"></div>
+      <span class="cat-badge">📦 YAML</span>
+    </div>
+
+    <!-- NAME -->
+    <div class="field-group">
+      <div class="field-label">
+        <span>Skill Name <span class="required">*</span></span>
+        <span class="field-hint" id="name-hint">lowercase, hyphens only</span>
+      </div>
+      <input type="text" id="skill-name" placeholder="e.g. email-formatter" oninput="sanitizeName(this); generate()" />
+    </div>
+
+    <!-- DESCRIPTION -->
+    <div class="field-group">
+      <div class="field-label">
+        <span>Description <span class="required">*</span></span>
+        <span class="char-count" id="desc-count">0 / 1024</span>
+      </div>
+      <textarea id="skill-desc" rows="4"
+        placeholder="What does this skill do? Include trigger phrases, keywords, and a push instruction (e.g. 'Never do X without this skill')."
+        oninput="updateCharCount(); generate()"></textarea>
+      <div class="field-hint">⚠️ Max 1,024 chars — primary trigger mechanism</div>
+    </div>
+
+    <!-- ALLOWED TOOLS -->
+    <div class="field-group">
+      <div class="field-label">
+        <span>Allowed Tools</span>
+      </div>
+      <div class="tools-grid" id="tools-grid">
+        <!-- chips injected by JS -->
+      </div>
+    </div>
+
+    <!-- BODY SECTION -->
+    <div class="section-divider">
+      <span class="section-divider-label">── Skill Body</span>
+      <div class="section-divider-line"></div>
+      <span class="cat-badge">📝 Markdown</span>
+    </div>
+
+    <!-- HEADLINE -->
+    <div class="field-group">
+      <div class="field-label"><span>Skill Headline (H1)</span></div>
+      <input type="text" id="skill-headline" placeholder="e.g. Email Formatter — Thai Academic Style"
+        oninput="generate()" />
+    </div>
+
+    <!-- TAGLINE -->
+    <div class="field-group">
+      <div class="field-label"><span>Tagline / Subtitle</span></div>
+      <input type="text" id="skill-tagline" placeholder="e.g. Drafts professional Thai university emails"
+        oninput="generate()" />
+    </div>
+
+    <!-- INSTRUCTION TABS -->
+    <div class="field-group">
+      <div class="field-label"><span>Instructions</span></div>
+      <div class="instruction-builder">
+        <div class="ib-tabs">
+          <button class="ib-tab active" onclick="switchTab(this, 'tab-steps')">Steps</button>
+          <button class="ib-tab" onclick="switchTab(this, 'tab-raw')">Raw Markdown</button>
+          <button class="ib-tab" onclick="switchTab(this, 'tab-example')">Example</button>
+          <button class="ib-tab" onclick="switchTab(this, 'tab-warn')">Warnings</button>
+        </div>
+
+        <!-- STEPS -->
+        <div class="ib-pane active" id="tab-steps">
+          <ul class="steps-list" id="steps-list"></ul>
+          <button class="add-step-btn" onclick="addStep()">＋ Add Step</button>
+        </div>
+
+        <!-- RAW -->
+        <div class="ib-pane" id="tab-raw">
+          <textarea id="raw-markdown" placeholder="## Context&#10;Explain background...&#10;&#10;## Approach&#10;..."></textarea>
+        </div>
+
+        <!-- EXAMPLE -->
+        <div class="ib-pane" id="tab-example">
+          <div class="example-grid" id="example-grid">
+            <!-- blocks injected -->
+          </div>
+          <button class="add-step-btn" onclick="addExample()">＋ Add Example</button>
+        </div>
+
+        <!-- WARNINGS -->
+        <div class="ib-pane" id="tab-warn">
+          <textarea id="warn-text" placeholder="- Never produce code without testing&#10;- Always check for sensitive data&#10;- Do not use external APIs unless explicitly requested"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- VERSION / CONTEXT -->
+    <div class="section-divider">
+      <span class="section-divider-label">── Metadata</span>
+      <div class="section-divider-line"></div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem;">
+      <div class="field-group">
+        <div class="field-label"><span>Version</span></div>
+        <input type="text" id="skill-version" placeholder="v1.0" oninput="generate()" />
+      </div>
+      <div class="field-group">
+        <div class="field-label"><span>Author / Context</span></div>
+        <input type="text" id="skill-author" placeholder="e.g. Chulalongkorn CPHS" oninput="generate()" />
+      </div>
+    </div>
+
+    <!-- ACTIONS -->
+    <div class="action-bar">
+      <button class="btn btn-primary" onclick="generate(); flashDownload()">
+        ⚡ Generate
+      </button>
+      <button class="btn btn-success" id="dl-btn" onclick="downloadMd()">
+        ⬇ Download SKILL.md
+      </button>
+      <button class="btn btn-ghost" onclick="clearAll()">
+        🗑 Clear
+      </button>
+    </div>
+  </div>
+
+  <!-- RIGHT: OUTPUT PANEL -->
+  <div class="output-panel">
+    <div class="output-header">
+      <div class="output-title">Output</div>
+      <div class="output-tabs">
+        <button class="out-tab active" onclick="switchOutTab(this, 'raw-out')">Raw</button>
+        <button class="out-tab" onclick="switchOutTab(this, 'preview-out')">Preview</button>
+      </div>
+      <button class="copy-btn" id="copy-btn" onclick="copyOutput()">⎘ Copy</button>
+    </div>
+
+    <!-- RAW OUTPUT -->
+    <div class="code-wrapper" id="raw-out">
+      <textarea class="code-output" id="code-output" readonly spellcheck="false" placeholder="← Fill the form to generate your SKILL.md..."></textarea>
+    </div>
+
+    <!-- PREVIEW OUTPUT -->
+    <div class="preview-output" id="preview-out">
+      <div class="preview-card">
+        <div class="preview-fm" id="preview-fm"></div>
+        <div class="preview-body" id="preview-body"></div>
+      </div>
+    </div>
+
+    <!-- VALIDITY BAR -->
+    <div class="validity-bar">
+      <div class="validity-dot" id="v-dot"></div>
+      <span class="validity-text" id="v-text">Fill required fields to validate</span>
+      <span class="validity-chars" id="v-chars"></span>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ───────────────────────────────────────────────
+// TOOLS CONFIG
+// ───────────────────────────────────────────────
+const ALL_TOOLS = [
+  { id: 'web_search', label: 'web_search' },
+  { id: 'web_fetch', label: 'web_fetch' },
+  { id: 'bash_tool', label: 'bash_tool' },
+  { id: 'create_file', label: 'create_file' },
+  { id: 'present_files', label: 'present_files' },
+  { id: 'docx', label: 'docx (.docx)' },
+  { id: 'PubMed', label: 'PubMed MCP' },
+  { id: 'str_replace', label: 'str_replace' },
+  { id: 'image_search', label: 'image_search' },
+  { id: 'event_create', label: 'calendar' },
+];
+
+let selectedTools = new Set();
+
+function buildToolsGrid() {
+  const grid = document.getElementById('tools-grid');
+  grid.innerHTML = ALL_TOOLS.map(t => `
+    <div class="tool-chip ${selectedTools.has(t.id) ? 'selected' : ''}"
+         onclick="toggleTool('${t.id}', this)">
+      <span class="dot"></span>${t.label}
+    </div>
+  `).join('');
+}
+
+function toggleTool(id, el) {
+  if (selectedTools.has(id)) { selectedTools.delete(id); el.classList.remove('selected'); el.querySelector('.dot').style.background = ''; }
+  else { selectedTools.add(id); el.classList.add('selected'); }
+  generate();
+}
+
+// ───────────────────────────────────────────────
+// STEPS
+// ───────────────────────────────────────────────
+let steps = [];
+let examplePairs = [];
+
+function addStep(text = '') {
+  steps.push(text);
+  renderSteps();
+}
+
+function renderSteps() {
+  const list = document.getElementById('steps-list');
+  list.innerHTML = steps.map((s, i) => `
+    <li class="step-item">
+      <div class="step-num">${i + 1}</div>
+      <input type="text" value="${escHtml(s)}"
+        placeholder="Describe step ${i+1}..."
+        oninput="steps[${i}] = this.value; generate()" />
+      <button class="step-del" onclick="removeStep(${i})">✕</button>
+    </li>
+  `).join('');
+}
+
+function removeStep(i) {
+  steps.splice(i, 1);
+  renderSteps();
+  generate();
+}
+
+function addExample(user = '', assistant = '') {
+  examplePairs.push({ user, assistant });
+  renderExamples();
+}
+
+function renderExamples() {
+  const grid = document.getElementById('example-grid');
+  grid.innerHTML = examplePairs.map((e, i) => `
+    <div class="example-block" style="flex-direction:column; gap:0.4rem;">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-family:var(--mono);font-size:0.62rem;color:var(--muted);">Example ${i+1}</span>
+        <button class="step-del" onclick="removeExample(${i})">✕</button>
+      </div>
+      <div style="display:flex;gap:0.5rem;">
+        <span class="example-label" style="color:var(--accent);">User</span>
+        <textarea placeholder="User says..." oninput="examplePairs[${i}].user=this.value;generate()">${escHtml(e.user)}</textarea>
+      </div>
+      <div style="display:flex;gap:0.5rem;">
+        <span class="example-label" style="color:var(--accent3);">Reply</span>
+        <textarea placeholder="Expected output..." oninput="examplePairs[${i}].assistant=this.value;generate()">${escHtml(e.assistant)}</textarea>
+      </div>
+    </div>
+  `).join('');
+}
+
+function removeExample(i) {
+  examplePairs.splice(i, 1);
+  renderExamples();
+  generate();
+}
+
+// ───────────────────────────────────────────────
+// TABS
+// ───────────────────────────────────────────────
+function switchTab(btn, paneId) {
+  document.querySelectorAll('.ib-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.ib-pane').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById(paneId).classList.add('active');
+  generate();
+}
+
+function switchOutTab(btn, paneId) {
+  document.querySelectorAll('.out-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('raw-out').classList.toggle('hidden', paneId !== 'raw-out');
+  const po = document.getElementById('preview-out');
+  if (paneId === 'preview-out') { po.classList.add('active'); po.style.display = 'block'; }
+  else { po.classList.remove('active'); po.style.display = 'none'; }
+}
+
+// ───────────────────────────────────────────────
+// CHAR COUNT
+// ───────────────────────────────────────────────
+function updateCharCount() {
+  const desc = document.getElementById('skill-desc').value;
+  const len = desc.length;
+  const el = document.getElementById('desc-count');
+  el.textContent = `${len} / 1024`;
+  el.className = 'char-count' + (len > 1024 ? ' danger' : len > 900 ? ' warn' : '');
+  generate();
+}
+
+// ───────────────────────────────────────────────
+// SANITIZE NAME
+// ───────────────────────────────────────────────
+function sanitizeName(el) {
+  el.value = el.value.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-');
+}
+
+// ───────────────────────────────────────────────
+// MAIN GENERATE
+// ───────────────────────────────────────────────
+function generate() {
+  const name = document.getElementById('skill-name').value.trim();
+  const desc = document.getElementById('skill-desc').value.trim();
+  const headline = document.getElementById('skill-headline').value.trim();
+  const tagline = document.getElementById('skill-tagline').value.trim();
+  const version = document.getElementById('skill-version').value.trim();
+  const author = document.getElementById('skill-author').value.trim();
+  const rawMd = document.getElementById('raw-markdown').value.trim();
+  const warnText = document.getElementById('warn-text').value.trim();
+
+  const toolsArr = Array.from(selectedTools);
+
+  let out = '';
+
+  // ─── FRONTMATTER ───
+  out += `---\n`;
+  out += `name: ${name || 'your-skill-name'}\n`;
+
+  if (desc) {
+    const descLines = desc.split('\n').map(l => '  ' + l).join('\n');
+    out += `description: |\n${descLines}\n`;
+  } else {
+    out += `description: |\n  Describe what this skill does. Include trigger phrases and keywords.\n`;
+  }
+
+  if (toolsArr.length > 0) {
+    out += `allowed-tools: ${toolsArr.join(', ')}\n`;
+  }
+
+  out += `---\n\n`;
+
+  // ─── BODY ───
+  const h1 = headline || (name ? name.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : 'Skill Name');
+  out += `# ${h1}\n\n`;
+
+  if (tagline) {
+    out += `> ${tagline}\n\n`;
+    out += `---\n\n`;
+  }
+
+  // Steps
+  const validSteps = steps.filter(s => s.trim());
+  if (validSteps.length > 0) {
+    out += `## Steps\n\n`;
+    validSteps.forEach((s, i) => {
+      out += `${i + 1}. ${s}\n`;
+    });
+    out += `\n`;
+  }
+
+  // Raw markdown
+  if (rawMd) {
+    out += rawMd + `\n\n`;
+  }
+
+  // Examples
+  const validEx = examplePairs.filter(e => e.user.trim() || e.assistant.trim());
+  if (validEx.length > 0) {
+    out += `## Examples\n\n`;
+    validEx.forEach((e, i) => {
+      out += `### Example ${i + 1}\n\n`;
+      if (e.user.trim()) out += `**User:** ${e.user}\n\n`;
+      if (e.assistant.trim()) out += `**Response:** ${e.assistant}\n\n`;
+    });
+  }
+
+  // Warnings
+  if (warnText.trim()) {
+    out += `## Critical Rules\n\n`;
+    const wlines = warnText.split('\n').filter(l => l.trim());
+    wlines.forEach(l => {
+      const clean = l.replace(/^[-*]\s*/, '').trim();
+      if (clean) out += `- ${clean}\n`;
+    });
+    out += `\n`;
+  }
+
+  // Footer
+  if (version || author) {
+    out += `---\n\n`;
+    out += `*${[version, author].filter(Boolean).join(' — ')}*\n`;
+  }
+
+  // ─── SET OUTPUT ───
+  document.getElementById('code-output').value = out;
+  updateValidity(name, desc);
+  updatePreview(name, desc, toolsArr, h1, tagline, validSteps, rawMd, validEx, warnText, version, author);
+
+  // Auto-resize textarea
+  const ta = document.getElementById('code-output');
+  ta.style.height = 'auto';
+  ta.style.height = Math.max(ta.scrollHeight, 300) + 'px';
+}
+
+// ───────────────────────────────────────────────
+// VALIDITY
+// ───────────────────────────────────────────────
+function updateValidity(name, desc) {
+  const dot = document.getElementById('v-dot');
+  const txt = document.getElementById('v-text');
+  const chars = document.getElementById('v-chars');
+
+  const descLen = desc.length;
+  chars.textContent = `desc: ${descLen}/1024 chars`;
+
+  if (!name && !desc) {
+    dot.className = 'validity-dot';
+    txt.className = 'validity-text';
+    txt.textContent = 'Fill required fields to validate';
+    return;
+  }
+
+  const issues = [];
+  if (!name) issues.push('name missing');
+  else if (!/^[a-z][a-z0-9-]*$/.test(name)) issues.push('name must be lowercase-hyphen');
+  if (!desc) issues.push('description missing');
+  if (descLen > 1024) issues.push(`description too long (${descLen - 1024} chars over)`);
+
+  if (issues.length > 0) {
+    dot.className = 'validity-dot error';
+    txt.className = 'validity-text error';
+    txt.textContent = '✗ ' + issues.join(' · ');
+  } else if (descLen > 900) {
+    dot.className = 'validity-dot warn';
+    txt.className = 'validity-text warn';
+    txt.textContent = '⚠ Valid but description near limit';
+  } else {
+    dot.className = 'validity-dot valid';
+    txt.className = 'validity-text valid';
+    txt.textContent = '✓ Valid — ready to package';
+  }
+}
+
+// ───────────────────────────────────────────────
+// PREVIEW
+// ───────────────────────────────────────────────
+function updatePreview(name, desc, tools, h1, tagline, steps, rawMd, examples, warn, version, author) {
+  const fm = document.getElementById('preview-fm');
+  const body = document.getElementById('preview-body');
+
+  // Frontmatter
+  const descTrunc = desc.length > 200 ? desc.slice(0, 200) + '…' : desc;
+  fm.innerHTML = `
+    <div style="color:var(--dim);margin-bottom:0.4rem;font-size:0.65rem;">--- YAML FRONTMATTER ---</div>
+    <div class="fm-row"><span class="fm-k">name:</span><span class="fm-v">${escHtml(name || 'your-skill-name')}</span></div>
+    <div class="fm-row"><span class="fm-k">description:</span><span class="fm-v">|</span></div>
+    <div style="color:#86efac;padding-left:1rem;font-size:0.72rem;white-space:pre-wrap;">${escHtml(descTrunc)}</div>
+    ${tools.length > 0 ? `<div class="fm-row" style="margin-top:0.3rem;"><span class="fm-k">allowed-tools:</span><span class="fm-v">${escHtml(tools.join(', '))}</span></div>` : ''}
+    <div style="color:var(--dim);margin-top:0.4rem;font-size:0.65rem;">---</div>
+  `;
+
+  // Body
+  let bodyHtml = `<div class="preview-h1">${escHtml(h1)}</div>`;
+
+  if (tagline) bodyHtml += `<p class="preview-p" style="font-style:italic;">📌 ${escHtml(tagline)}</p>`;
+
+  if (steps.length > 0) {
+    bodyHtml += `<div class="preview-h2">Steps</div>`;
+    bodyHtml += `<ol class="preview-ol">${steps.map(s => `<li>${escHtml(s)}</li>`).join('')}</ol>`;
+  }
+
+  if (rawMd.trim()) {
+    bodyHtml += `<div class="preview-h2">Instructions</div>`;
+    bodyHtml += `<div class="preview-code">${escHtml(rawMd.slice(0, 300))}${rawMd.length > 300 ? '\n...' : ''}</div>`;
+  }
+
+  if (examples.length > 0) {
+    bodyHtml += `<div class="preview-h2">Examples</div>`;
+    examples.slice(0, 2).forEach((e, i) => {
+      bodyHtml += `<p class="preview-p"><strong style="color:var(--accent);">User:</strong> ${escHtml(e.user)}</p>`;
+      if (e.assistant) bodyHtml += `<p class="preview-p"><strong style="color:var(--accent3);">Response:</strong> ${escHtml(e.assistant.slice(0, 80))}${e.assistant.length > 80 ? '…' : ''}</p>`;
+    });
+  }
+
+  if (warn.trim()) {
+    bodyHtml += `<div class="preview-h2">Critical Rules</div>`;
+    bodyHtml += `<div class="preview-tags">`;
+    warn.split('\n').filter(l => l.trim()).slice(0, 4).forEach(l => {
+      bodyHtml += `<span class="preview-tag">⚠ ${escHtml(l.replace(/^[-*]\s*/, '').slice(0, 40))}</span>`;
+    });
+    bodyHtml += `</div>`;
+  }
+
+  if (tools.length > 0) {
+    bodyHtml += `<div style="margin-top:1rem;"><span style="font-family:var(--mono);font-size:0.65rem;color:var(--dim);">TOOLS:</span><div class="preview-tags" style="margin-top:0.3rem;">`;
+    tools.forEach(t => { bodyHtml += `<span class="preview-tag" style="color:var(--accent);">${escHtml(t)}</span>`; });
+    bodyHtml += `</div></div>`;
+  }
+
+  if (version || author) {
+    bodyHtml += `<p class="preview-p" style="margin-top:1rem;font-family:var(--mono);font-size:0.68rem;">${escHtml([version, author].filter(Boolean).join(' — '))}</p>`;
+  }
+
+  body.innerHTML = bodyHtml;
+}
+
+// ───────────────────────────────────────────────
+// COPY & DOWNLOAD
+// ───────────────────────────────────────────────
+function copyOutput() {
+  const ta = document.getElementById('code-output');
+  navigator.clipboard.writeText(ta.value).then(() => {
+    const btn = document.getElementById('copy-btn');
+    btn.textContent = '✓ Copied!';
+    btn.classList.add('copied');
+    showToast('📋 Copied to clipboard!');
+    setTimeout(() => { btn.textContent = '⎘ Copy'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+
+function downloadMd() {
+  const content = document.getElementById('code-output').value;
+  const name = document.getElementById('skill-name').value.trim() || 'skill';
+  const blob = new Blob([content], { type: 'text/markdown' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `SKILL.md`;
+  a.click();
+  showToast(`⬇ SKILL.md downloaded!`);
+}
+
+function flashDownload() {
+  const btn = document.getElementById('dl-btn');
+  btn.classList.add('pulse');
+  setTimeout(() => btn.classList.remove('pulse'), 3000);
+}
+
+function clearAll() {
+  document.getElementById('skill-name').value = '';
+  document.getElementById('skill-desc').value = '';
+  document.getElementById('skill-headline').value = '';
+  document.getElementById('skill-tagline').value = '';
+  document.getElementById('skill-version').value = '';
+  document.getElementById('skill-author').value = '';
+  document.getElementById('raw-markdown').value = '';
+  document.getElementById('warn-text').value = '';
+  selectedTools.clear();
+  steps = [];
+  examplePairs = [];
+  buildToolsGrid();
+  renderSteps();
+  renderExamples();
+  updateCharCount();
+  generate();
+}
+
+// ───────────────────────────────────────────────
+// TEMPLATES
+// ───────────────────────────────────────────────
+const TEMPLATES = {
+  email: {
+    name: 'email-formatter',
+    desc: 'ร่าง email ภาษาไทยสำหรับภายในมหาวิทยาลัยรังสิต ทำงานเมื่อผู้ใช้ขอ ร่าง email เขียน email ภายในมหาวิทยาลัยรังสิต Trigger immediately when user asks to draft, write, or compose a formal Thai university email. Also triggers on: "email formatter", "/email", "ร่าง email", "เขียน email". Never draft a university email without this skill.',
+    headline: 'Email Formatter — Thai Academic Style',
+    tagline: 'Drafts professional Thai university emails with proper honorifics',
+    tools: ['bash_tool', 'create_file'],
+    steps: [
+      'ถามข้อมูลที่สำคัญ: ผู้รับ, จุดประสงค์, น้ำเสียง (ทางการ/กึ่งทางการ)',
+      'ร่างอีเมลตามโครงสร้างด้านล่าง',
+      'ให้ผู้ใช้รีวิวก่อนส่ง'
+    ],
+    example: { user: 'ร่างอีเมลขอเลื่อนนัดประชุม', assistant: 'เรียน คุณสมชาย\n\nเนื่องด้วยมีภารกิจเร่งด่วน ขอเลื่อนนัดประชุม...' },
+    warn: '- ห้ามใช้คำแสลงหรือโมจิในอีเมลทางการ\n- ตรวจสอบคำนำหน้าชื่อให้ถูกต้อง (คุณ/ดร./อาจารย์)',
+    version: 'v1.0', author: 'Watanabe Tools'
+  },
+  research: {
+    name: 'research-writer',
+    desc: 'Generates PhD-level research proposals and academic writing for public health. Trigger immediately when user asks to: draft proposal chapters, write literature review, generate CARS introduction, create PICO table, write in Q1-journal tone, or reference NCD, hypertension, community health, AI screening. Also triggers on: "/research", "zeeyou research", "CARS intro", "PICO table". Never draft a PhD research document without this skill.',
+    headline: 'Research Writer — PhD Public Health',
+    tagline: 'APA 7th · Q1-journal tone · Chulalongkorn CPHS context',
+    tools: ['web_search', 'web_fetch', 'PubMed', 'create_file', 'docx'],
+    steps: [
+      'Identify research question and design (PICO/SPIDER)',
+      'Search PubMed and Google Scholar for evidence (n≥15 sources)',
+      'Draft CARS-framed introduction with gap analysis',
+      'Generate methods section (past tense, passive voice)',
+      'Format references APA 7th edition'
+    ],
+    example: { user: 'Write background on hypertension in Thai adults', assistant: 'Hypertension remains a critical public health challenge in Thailand...' },
+    warn: '- Always use APA 7th edition for references\n- Introduction: present tense; Methods: past tense passive\n- Minimum 15 peer-reviewed citations for any section',
+    version: 'v1.1', author: 'Chulalongkorn CPHS · 2026'
+  },
+  sop: {
+    name: 'sop-generator',
+    desc: 'Generates Thai government Standard Operating Procedure (SOP) manuals for IT/IS development and public administration. Trigger when user asks for SOP, คู่มือ, คู่มือมาตรฐาน, SOP manual, procedure document, SDLC manual, or government documentation. Also triggers on: "/sop", "gen-manual", "คู่มือการปฏิบัติงาน". Never generate a government SOP without this skill.',
+    headline: 'SOP Generator — Thai Government Standard',
+    tagline: 'Produces Thai-language SOPs aligned with government format',
+    tools: ['bash_tool', 'create_file', 'docx', 'present_files'],
+    steps: [
+      'รับข้อมูล: ชื่อหน่วยงาน, กระบวนการ, ขั้นตอนหลัก',
+      'สร้างโครงสร้าง SOP ตามมาตรฐานราชการ',
+      'เพิ่ม Flowchart และตารางรับผิดชอบ (RACI)',
+      'ผลิต Word Document (.docx) พร้อม Header/Footer',
+      'Present ไฟล์ให้ผู้ใช้ดาวน์โหลด'
+    ],
+    example: { user: 'สร้างคู่มือระบบ e-Filing', assistant: 'SOP-ICT-01: มาตรฐานการพัฒนาระบบ e-Filing...' },
+    warn: '- ใช้ภาษาราชการ ไม่ใช้ภาษาพูด\n- ต้องมีเลขที่เอกสาร วันที่ และผู้อนุมัติ\n- Font: Sarabun 14pt สำหรับเอกสารราชการ',
+    version: 'v1.0', author: 'Chanwanich Group · DIP Thailand'
+  },
+  dashboard: {
+    name: 'dashboard-builder',
+    desc: 'Builds interactive HTML/React dashboard components for health data, EA frameworks, and analytics. Trigger when user asks to build dashboard, create visualization, generate charts, build interactive HTML tool, or display statistical data. Also triggers on: "/dashboard", "html dashboard", "interactive tool", "data viz". Never build a dashboard without this skill.',
+    headline: 'Dashboard Builder — Interactive Analytics',
+    tagline: 'Health data · EA frameworks · SPSS-style outputs',
+    tools: ['bash_tool', 'create_file', 'present_files'],
+    steps: [
+      'Identify data source and key metrics to display',
+      'Select chart types (bar/line/pie/table) appropriate to data',
+      'Build responsive HTML with embedded CSS (no frameworks)',
+      'Add interactivity: filters, search, export',
+      'Move to /mnt/user-data/outputs/ and present'
+    ],
+    example: { user: 'Build dashboard for HealthStreet survey data', assistant: '<html dashboard with charts and filters>' },
+    warn: '- Never use external CDNs unless user confirms internet access\n- Always use Sarabun font for Thai-language dashboards\n- Test responsiveness for mobile screens',
+    version: 'v1.0', author: 'Watanabe Tools · 2026'
+  },
+  blank: {
+    name: '',
+    desc: '',
+    headline: '',
+    tagline: '',
+    tools: [],
+    steps: [],
+    example: null,
+    warn: '',
+    version: 'v1.0',
+    author: ''
+  }
+};
+
+function loadTemplate(key) {
+  const t = TEMPLATES[key];
+  document.getElementById('skill-name').value = t.name;
+  document.getElementById('skill-desc').value = t.desc;
+  document.getElementById('skill-headline').value = t.headline;
+  document.getElementById('skill-tagline').value = t.tagline;
+  document.getElementById('skill-version').value = t.version;
+  document.getElementById('skill-author').value = t.author;
+  document.getElementById('warn-text').value = t.warn;
+
+  selectedTools = new Set(t.tools);
+  buildToolsGrid();
+
+  steps = [...t.steps];
+  renderSteps();
+
+  examplePairs = [];
+  if (t.example) examplePairs.push(t.example);
+  renderExamples();
+
+  updateCharCount();
+  generate();
+  showToast(`📦 Template "${key}" loaded!`);
+}
+
+// ───────────────────────────────────────────────
+// HELPERS
+// ───────────────────────────────────────────────
+function escHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ───────────────────────────────────────────────
+// INIT
+// ───────────────────────────────────────────────
+buildToolsGrid();
+addStep('');
+generate();
+
+// Load email template by default as example
+setTimeout(() => loadTemplate('email'), 100);
+</script>
+</body>
+</html>
